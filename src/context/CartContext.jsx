@@ -13,7 +13,7 @@ export function CartProvider({ children }) {
     }));
   });
 
-  // Exp 2: useEffect
+  // useEffect
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);

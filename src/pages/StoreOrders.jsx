@@ -1,18 +1,20 @@
 import { FaClipboardList } from "react-icons/fa";
-import { useState } from "react";
+import { useApp } from "../context/AppContext";
 
-const defaultOrders = [
-  { id: "#ORD001", customer: "Rahul", amount: 850, status: "Completed" },
-  { id: "#ORD002", customer: "Priya", amount: 1250, status: "Pending" },
-  { id: "#ORD003", customer: "Aman", amount: 620, status: "Completed" },
-  { id: "#ORD004", customer: "Sneha", amount: 980, status: "Pending" },
-  { id: "#ORD005", customer: "Riya", amount: 1450, status: "Completed" },
-];
+// const defaultOrders = [
+//   { id: "#ORD001", customer: "Rahul", amount: 850, status: "Completed" },
+//   { id: "#ORD002", customer: "Priya", amount: 1250, status: "Pending" },
+//   { id: "#ORD003", customer: "Aman", amount: 620, status: "Completed" },
+//   { id: "#ORD004", customer: "Sneha", amount: 980, status: "Pending" },
+//   { id: "#ORD005", customer: "Riya", amount: 1450, status: "Completed" },
+// ];
 
 export default function StoreOrders() {
-  const [orders] = useState(() => {
-    return JSON.parse(localStorage.getItem("orders")) || defaultOrders;
-  });
+  const { orders, updateOrderStatus } = useApp();
+
+  // const [orders] = useState(() => {
+  //   return JSON.parse(localStorage.getItem("orders")) || defaultOrders;
+  // });
 
   return (
     <main className="p-5 sm:p-8">
@@ -34,17 +36,17 @@ export default function StoreOrders() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
             <p className="text-sm text-slate-500">Total Orders</p>
-            <p className="text-3xl font-bold text-slate-800 mt-2">56</p>
+            <p className="text-3xl font-bold text-slate-800 mt-2">{orders.length}</p>
           </div>
 
           <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100">
             <p className="text-sm text-orange-600">Pending</p>
-            <p className="text-3xl font-bold text-orange-700 mt-2">8</p>
+            <p className="text-3xl font-bold text-orange-700 mt-2">{orders.filter((order) => order.status === "Pending").length}</p>
           </div>
 
           <div className="bg-green-50 rounded-2xl p-5 border border-green-100">
             <p className="text-sm text-green-600">Completed</p>
-            <p className="text-3xl font-bold text-green-700 mt-2">48</p>
+            <p className="text-3xl font-bold text-green-700 mt-2">{orders.filter((order) => order.status === "Completed").length}</p>
           </div>
         </div>
 
@@ -101,15 +103,28 @@ export default function StoreOrders() {
                     <td className="px-5 py-4 font-semibold">₹{order.amount}</td>
 
                     <td className="px-5 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          order.status === "Completed"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-orange-100 text-orange-700"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            order.status === "Completed"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-orange-100 text-orange-700"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+
+                        {order.status === "Pending" && (
+                          <button
+                            onClick={() =>
+                              updateOrderStatus(order.id, "Completed")
+                            }
+                            className="text-xs font-semibold text-green-600 hover:text-green-700"
+                          >
+                            Mark Completed
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

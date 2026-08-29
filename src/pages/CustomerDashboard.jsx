@@ -1,9 +1,4 @@
-import {
-  FaSearch,
-  FaArrowRight,
-  FaLeaf,
-  FaShoppingCart,
-} from "react-icons/fa";
+import { FaSearch, FaArrowRight, FaLeaf, FaShoppingCart } from "react-icons/fa";
 
 /*** Products Images */
 import basmati_rice from "../assets/products/basmati_rice.jpg";
@@ -25,6 +20,7 @@ import oreo from "../assets/products/oreo.jpg";
 
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
+import { useApp } from "../context/AppContext";
 
 /*** Products List */
 const products = [
@@ -184,6 +180,8 @@ const categories = [
 ];
 
 export default function CustomerDashboard() {
+  const { orders } = useApp();
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
@@ -353,7 +351,7 @@ export default function CustomerDashboard() {
         {/* QUICK ACTION */}
         <section
           id="orders"
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 items-start"
         >
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <h3 className="text-xl font-bold text-slate-800">My Orders</h3>
@@ -365,13 +363,44 @@ export default function CustomerDashboard() {
             <div className="mt-6 p-6 rounded-xl bg-slate-50 text-center">
               <FaShoppingCart className="mx-auto text-3xl text-slate-300" />
 
-              <p className="text-sm text-slate-500 mt-3">
-                No active orders yet.
-              </p>
+              {orders.length === 0 ? (
+                <p className="text-sm text-slate-500 mt-3">
+                  No active orders yet.
+                </p>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  {orders.slice(0, 3).map((order) => (
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between bg-white border border-slate-100 rounded-xl p-4"
+                    >
+                      <div>
+                        <p className="font-semibold text-slate-700">
+                          #{order.id}
+                        </p>
+
+                        <p className="text-xs text-slate-500 mt-1">
+                          {order.date}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">
+                          ₹{order.total}
+                        </p>
+
+                        <span className="text-xs font-semibold text-orange-600">
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
+          <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg h-fit lg:sticky lg:top-24">
             <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center mb-5">
               <FaShoppingCart />
             </div>

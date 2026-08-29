@@ -19,22 +19,89 @@ import {
   Legend,
 } from "recharts";
 
-const monthlyData = [
-  { month: "Jan", revenue: 2800, orders: 6 },
-  { month: "Feb", revenue: 3200, orders: 7 },
-  { month: "Mar", revenue: 3000, orders: 8 },
-  { month: "Apr", revenue: 4100, orders: 9 },
-  { month: "May", revenue: 3500, orders: 7 },
-  { month: "Jun", revenue: 4300, orders: 10 },
-  { month: "Jul", revenue: 3600, orders: 9 },
-];
-
-const orderStatusData = [
-  { name: "Completed", value: 48 },
-  { name: "Pending", value: 8 },
-];
+import { useApp } from "../context/AppContext";
 
 export default function Statistics() {
+  const { orders, products } = useApp();
+
+  /* ================= ORDER COUNTS ================= */
+
+  const totalOrders = orders.length;
+
+  const pendingOrders = orders.filter(
+    (order) => order.status === "Pending"
+  ).length;
+
+  const completedOrders = orders.filter(
+    (order) => order.status === "Completed"
+  ).length;
+
+  /* ================= REVENUE ================= */
+
+  const totalRevenue = orders
+    .filter((order) => order.status === "Completed")
+    .reduce((total, order) => total + Number(order.amount || 0), 0);
+
+  /* ================= CUSTOMERS ================= */
+
+  const uniqueCustomers = new Set(
+    orders.map((order) => order.customer)
+  );
+
+  const totalCustomers = uniqueCustomers.size;
+
+  /* ================= MONTHLY DATA ================= */
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const monthlyData = monthNames.map((month) => ({
+    month,
+    revenue: 0,
+    orders: 0,
+  }));
+
+ orders.forEach((order) => {
+  if (!order.date) return;
+
+  const orderDate = new Date(order.date);
+
+  if (isNaN(orderDate.getTime())) return;
+
+  const monthIndex = orderDate.getMonth();
+
+  monthlyData[monthIndex].orders += 1;
+
+  if (order.status === "Completed") {
+    monthlyData[monthIndex].revenue += Number(order.amount || 0);
+  }
+});
+
+  /* ================= ORDER STATUS ================= */
+
+  const orderStatusData = [
+    {
+      name: "Completed",
+      value: completedOrders,
+    },
+    {
+      name: "Pending",
+      value: pendingOrders,
+    },
+  ];
+
   return (
     <main className="p-5 sm:p-8">
 
@@ -69,11 +136,11 @@ export default function Statistics() {
             </p>
 
             <h2 className="text-3xl font-bold text-slate-800 mt-1">
-              ₹24,500
+              ₹{totalRevenue.toLocaleString("en-IN")}
             </h2>
 
             <p className="text-xs text-green-600 mt-2">
-              +15% this month
+              From completed orders
             </p>
 
           </div>
@@ -88,11 +155,11 @@ export default function Statistics() {
             </p>
 
             <h2 className="text-3xl font-bold text-slate-800 mt-1">
-              56
+              {totalOrders}
             </h2>
 
             <p className="text-xs text-orange-600 mt-2">
-              8 pending
+              {pendingOrders} pending
             </p>
 
           </div>
@@ -107,11 +174,11 @@ export default function Statistics() {
             </p>
 
             <h2 className="text-3xl font-bold text-slate-800 mt-1">
-              120
+              {products.length}
             </h2>
 
             <p className="text-xs text-blue-600 mt-2">
-              12 added this month
+              Available products
             </p>
 
           </div>
@@ -126,11 +193,11 @@ export default function Statistics() {
             </p>
 
             <h2 className="text-3xl font-bold text-slate-800 mt-1">
-              85
+              {totalCustomers}
             </h2>
 
             <p className="text-xs text-purple-600 mt-2">
-              +8% growth
+              Customers with orders
             </p>
 
           </div>
@@ -178,12 +245,16 @@ export default function Statistics() {
                   />
 
                   <Tooltip
-                    formatter={(value) => [`₹${value}`, "Revenue"]}
+                    formatter={(value) => [
+                      `₹${Number(value).toLocaleString("en-IN")}`,
+                      "Revenue",
+                    ]}
                     labelFormatter={(label) => `Month: ${label}`}
                     contentStyle={{
                       borderRadius: "12px",
                       border: "1px solid #e2e8f0",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      boxShadow:
+                        "0 4px 12px rgba(0,0,0,0.08)",
                     }}
                   />
 
