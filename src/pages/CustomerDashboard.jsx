@@ -20,154 +20,25 @@ import oreo from "../assets/products/oreo.jpg";
 
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
+const productImages = {
+  "Basmati Rice": basmati_rice,
+  "Brown Rice": brown_rice,
+  "Aashirvaad Atta": atta,
+  "Wheat Flour": wheat_flour,
+  "Chana Dal": chana_dal,
+  "Toor Dal": toor_dal,
+  "Masoor Dal": masoor_dal,
+  "Moong Dal": moong_dal,
+  "Green Moong": green_moong,
+  "Chole": chole,
+  "Rajma": rajma,
+  "Soyabean Chunks": soyabean_chunks,
+  "Salt": salt,
+  "Sugar": sugar,
+  "Maggi": maggi,
+  "Oreo": oreo,
+};
 import { useApp } from "../context/AppContext";
-
-/*** Products List */
-const products = [
-  {
-    id: 1,
-    name: "Basmati Rice",
-    category: "Grains",
-    price: 120,
-    unit: "1 kg",
-    image: basmati_rice,
-  },
-
-  {
-    id: 2,
-    name: "Brown Rice",
-    category: "Grains",
-    price: 120,
-    unit: "1 kg",
-    image: brown_rice,
-  },
-
-  {
-    id: 3,
-    name: "Aashirvaad Atta",
-    category: "Grains",
-    price: 54,
-    unit: "1 kg",
-    image: atta,
-  },
-
-  {
-    id: 4,
-    name: "Fortune Atta",
-    category: "Grains",
-    price: 53,
-    unit: "1 kg",
-    image: wheat_flour,
-  },
-
-  {
-    id: 5,
-    name: "Chana Dal",
-    category: "Pulses",
-    price: 50,
-    unit: "1 kg",
-    image: chana_dal,
-  },
-
-  {
-    id: 6,
-    name: "Toor Dal",
-    category: "Pulses",
-    price: 130,
-    unit: "1 kg",
-    image: toor_dal,
-  },
-
-  {
-    id: 7,
-    name: "Masoor Dal",
-    category: "Pulses",
-    price: 40,
-    unit: "1 kg",
-    image: masoor_dal,
-  },
-
-  {
-    id: 8,
-    name: "Moong Dal",
-    category: "Pulses",
-    price: 30,
-    unit: "1 kg",
-    image: moong_dal,
-  },
-
-  {
-    id: 9,
-    name: "Green Moong",
-    category: "Pulses",
-    price: 60,
-    unit: "1 kg",
-    image: green_moong,
-  },
-
-  {
-    id: 10,
-    name: "Rajma",
-    category: "Pulses",
-    price: 50,
-    unit: "1 kg",
-    image: rajma,
-  },
-
-  {
-    id: 11,
-    name: "Chole",
-    category: "Pulses",
-    price: 40,
-    unit: "1 kg",
-    image: chole,
-  },
-
-  {
-    id: 12,
-    name: "Soyabean Chunks",
-    category: "Pulses",
-    price: 120,
-    unit: "1 kg",
-    image: soyabean_chunks,
-  },
-
-  {
-    id: 13,
-    name: "Salt",
-    category: "Essentials",
-    price: 30,
-    unit: "1 kg",
-    image: salt,
-  },
-
-  {
-    id: 14,
-    name: "Sugar",
-    category: "Essentials",
-    price: 80,
-    unit: "1 kg",
-    image: sugar,
-  },
-
-  {
-    id: 15,
-    name: "Maggi",
-    category: "Snacks",
-    price: 20,
-    unit: "1 packet",
-    image: maggi,
-  },
-
-  {
-    id: 16,
-    name: "Oreo",
-    category: "Snacks",
-    price: 10,
-    unit: "1",
-    image: oreo,
-  },
-];
 
 /* ================= CATEGORIES ================= */
 
@@ -180,7 +51,7 @@ const categories = [
 ];
 
 export default function CustomerDashboard() {
-  const { orders } = useApp();
+  const { orders, products } = useApp();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -343,7 +214,12 @@ export default function CustomerDashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard 
+                key={product.id} 
+                product={{
+                  ...product,
+                  image: productImages[product.name],
+                }} />
             ))}
           </div>
         </section>

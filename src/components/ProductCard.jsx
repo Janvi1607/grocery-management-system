@@ -38,7 +38,7 @@ export default function ProductCard({ product }) {
         </h4>
 
         <p className="text-sm text-slate-500 mt-1">
-          {product.unit}
+          {product.unit || "1 pack"}
         </p>
 
         <div className="flex items-center justify-between mt-5">

@@ -2,15 +2,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const AppContext = createContext();
 
-const defaultProducts = [
-  { id: 1, name: "Basmati Rice", category: "Grains", price: 120, stock: 45 },
-  { id: 2, name: "Aashirvaad Atta", category: "Grains", price: 54, stock: 32 },
-  { id: 3, name: "Toor Dal", category: "Pulses", price: 140, stock: 28 },
-  { id: 4, name: "Fortune Oil", category: "Essentials", price: 145, stock: 18 },
-  { id: 5, name: "Sugar", category: "Essentials", price: 48, stock: 50 },
-  { id: 6, name: "Tea", category: "Beverages", price: 180, stock: 24 },
-];
-
 export function AppProvider({ children }) {
   /* ================= USER STATE ================= */
 
@@ -22,56 +13,123 @@ export function AppProvider({ children }) {
 
   /* ================= ORDERS STATE ================= */
 
-  const [orders, setOrders] = useState(() => {
-    return JSON.parse(localStorage.getItem("orders")) || [];
-  });
+  const [orders, setOrders] = useState([]);
 
   /* ================= PRODUCTS STATE ================= */
-  const [products, setProducts] = useState(() => {
-    return JSON.parse(localStorage.getItem("products")) || defaultProducts;
-  });
-
-  /* ================= PERSIST ORDERS ================= */
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/products");
+        const data = await response.json();
 
-  /* ================= PERSIST ORDERS ================= */
-  
-  useEffect(() => {
-    localStorage.setItem("products", JSON.stringify(products));
-  }, [products]);
+        const formattedProducts = data.map((product) => ({
+          ...product,
+          id: product._id,
+        }));
+
+        setProducts(formattedProducts);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   /* ================= CREATE ORDER ================= */
 
-  const createOrder = (cartItems, total) => {
+  const createOrder = async (cartItems, total) => {
+  try {
+    const response = await fetch("http://localhost:5000/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customer: user.name,
+        items: cartItems,
+        amount: total,
+      }),
+    });
+
+    const data = await response.json();
+
     const newOrder = {
-      id: `ORD${Date.now()}`,
-      customer: user.name,
-      items: cartItems,
-      amount: total,
-      total: total,
-      status: "Pending",
-      date: new Date().toLocaleDateString(),
+      ...data,
+      id: data._id,
+      total: data.amount,
+      date: data.createdAt,
     };
 
     setOrders((prev) => [newOrder, ...prev]);
 
     return newOrder;
-  };
+  } catch (error) {
+    console.error("Failed to create order:", error);
+  }
+};
 
   /* ================= UPDATE ORDER ================= */
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/orders/${orderId}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
     setOrders((prev) =>
       prev.map((order) =>
         order.id === orderId
-          ? { ...order, status: newStatus }
+          ? {
+              ...data,
+              id: data._id,
+              total: data.amount,
+              date: data.createdAt,
+            }
           : order
       )
     );
+  } catch (error) {
+    console.error("Failed to update order:", error);
+  }
+};
+
+/* ================= LOAD ORDER ================= */
+
+useEffect(() => {
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/orders");
+      const data = await response.json();
+
+      const formattedOrders = data.map((order) => ({
+        ...order,
+        id: order._id,
+        total: order.amount,
+        date: order.createdAt,
+      }));
+
+      setOrders(formattedOrders);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+    }
   };
+
+  fetchOrders();
+}, []);
 
   /* ================= CLEAR ORDERS ================= */
 
