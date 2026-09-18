@@ -1,7 +1,36 @@
+const { body, validationResult } = require("express-validator");
 const express = require("express");
 const Order = require("../models/Order");
 
 const router = express.Router();
+
+const validateOrder = [
+  body("customer")
+    .trim()
+    .notEmpty()
+    .withMessage("Customer name is required"),
+
+  body("items")
+    .isArray({ min: 1 })
+    .withMessage("Order must contain at least one item"),
+
+  body("amount")
+    .isFloat({ min: 0 })
+    .withMessage("Amount must be a positive number"),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: "Order validation failed",
+        errors: errors.array(),
+      });
+    }
+
+    next();
+  },
+];
 
 // GET all orders
 router.get("/", async (req, res) => {
@@ -14,7 +43,7 @@ router.get("/", async (req, res) => {
 });
 
 // CREATE order
-router.post("/", async (req, res) => {
+router.post("/", validateOrder, async (req, res) => {
   try {
     const order = new Order(req.body);
     const savedOrder = await order.save();
