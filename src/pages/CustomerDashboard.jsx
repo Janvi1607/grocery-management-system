@@ -17,6 +17,7 @@ import salt from "../assets/products/salt.jpg";
 import sugar from "../assets/products/sugar.jpg";
 import maggi from "../assets/products/maggi.jpg";
 import oreo from "../assets/products/oreo.jpg";
+import good_day from "../assets/products/good_day.jpg";
 
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
@@ -37,6 +38,7 @@ const productImages = {
   "Sugar": sugar,
   "Maggi": maggi,
   "Oreo": oreo,
+  "Good Day": good_day,
 };
 import { useApp } from "../context/AppContext";
 

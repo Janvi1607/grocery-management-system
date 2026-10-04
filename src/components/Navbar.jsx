@@ -21,10 +21,7 @@ export default function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
-  const { 
-    user, 
-    createOrder 
-  } = useApp();
+  const { user, logout, createOrder } = useApp();
 
   const {
     cart,
@@ -134,7 +131,6 @@ export default function Navbar() {
               </button>
 
               {/* DESKTOP PROFILE */}
-
               <button
                 onClick={() => setShowProfile(true)}
                 className="hidden sm:flex items-center gap-2 text-slate-600 hover:text-green-600 transition"
@@ -142,6 +138,12 @@ export default function Navbar() {
                 <FaUserCircle className="text-xl" />
 
                 <span className="text-sm font-semibold">Profile</span>
+              </button>
+              <button
+                onClick={logout}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+              >
+                Logout
               </button>
             </div>
           </div>

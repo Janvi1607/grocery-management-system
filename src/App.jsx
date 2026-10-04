@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import CustomerDashboard from "./pages/CustomerDashboard";
 
 import StoreLayout from "./components/StoreLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import StoreDashboard from "./pages/StoreDashboard";
 import StoreProducts from "./pages/StoreProducts";
 import StoreOrders from "./pages/StoreOrders";
@@ -22,9 +23,23 @@ function App() {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/customer" element={<CustomerDashboard />} />
+            <Route 
+              path="/customer" 
+              element={
+                <ProtectedRoute role="Customer">
+                  <CustomerDashboard />
+                </ProtectedRoute>
+              } 
+            />
 
-            <Route path="/store" element={<StoreLayout />}>
+            <Route 
+              path="/store" 
+              element={
+                < ProtectedRoute role="Store">
+                  <StoreLayout />
+                </ProtectedRoute>
+              }
+              >
               <Route index element={<StoreDashboard />} />
               <Route path="products" element={<StoreProducts />} />
               <Route path="orders" element={<StoreOrders />} />

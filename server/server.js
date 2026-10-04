@@ -12,6 +12,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
+const authRoutes = require("./routes/authRoutes");
+
 const app = express();
 
 const PORT = process.env.PORT || 5000;
@@ -40,9 +42,11 @@ app.use("/api", apiLimiter);
 
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/auth", authRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
+
 
 // Test route
 app.get("/", (req, res) => {

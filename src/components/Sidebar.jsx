@@ -11,8 +11,10 @@ import {
 } from "react-icons/fa";
 
 import { NavLink } from "react-router-dom";
+import { useApp } from "../context/AppContext";
 
 export default function Sidebar({ open, setOpen }) {
+  const { logout } = useApp();
   const menuItems = [
     { name: "Dashboard", path: "/store", icon: <FaHome /> },
     { name: "Products", path: "/store/products", icon: <FaBox /> },
@@ -97,7 +99,9 @@ export default function Sidebar({ open, setOpen }) {
         </div>
 
         {/* Logout */}
-        <button className="mt-auto flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-500 transition">
+        <button 
+          onClick={logout}
+          className="mt-auto flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-500 transition">
           <FaSignOutAlt />
           Logout
         </button>

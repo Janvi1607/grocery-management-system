@@ -1,12 +1,13 @@
-import { FaBox, FaPlus, FaSearch } from "react-icons/fa";
+import { FaBox, FaPlus, FaSearch, FaEdit, FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { useApp } from "../context/AppContext";
 
 export default function StoreProducts() {
-  const { products, setProducts } = useApp();
+  const { products, setProducts, token } = useApp();
 
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -37,7 +38,18 @@ export default function StoreProducts() {
           </div>
 
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingProduct(null);
+
+              setNewProduct({
+                name: "",
+                category: "",
+                price: "",
+                stock: "",
+              });
+
+              setShowModal(true);
+            }}
             className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold transition"
           >
             <FaPlus />
@@ -98,6 +110,66 @@ export default function StoreProducts() {
                   </p>
                 </div>
               </div>
+              <div className="flex gap-3 mt-5">
+                <button
+                  onClick={() => {
+                    setEditingProduct(product);
+
+                    setNewProduct({
+                      name: product.name,
+                      category: product.category,
+                      price: product.price,
+                      stock: product.stock,
+                    });
+
+                    setShowModal(true);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition"
+                >
+                  <FaEdit />
+                  Update
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      `Are you sure you want to delete ${product.name}?`,
+                    );
+
+                    if (!confirmed) return;
+
+                    try {
+                      const response = await fetch(
+                        `http://localhost:5000/api/products/${product.id}`,
+                        {
+                          method: "DELETE",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        },
+                      );
+
+                      const data = await response.json();
+
+                      if (!response.ok) {
+                        throw new Error(
+                          data.message || "Failed to delete product",
+                        );
+                      }
+
+                      setProducts((prev) =>
+                        prev.filter((item) => item.id !== product.id),
+                      );
+                    } catch (error) {
+                      alert(error.message);
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold transition"
+                >
+                  <FaTrash />
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -107,7 +179,7 @@ export default function StoreProducts() {
             <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-2xl font-bold text-slate-800">
-                  Add Product
+                  {editingProduct ? "Update Product" : "Add Product"}
                 </h2>
 
                 <button
@@ -181,7 +253,8 @@ export default function StoreProducts() {
                 </button>
 
                 <button
-                  onClick={() => {
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition"
+                  onClick={async () => {
                     if (
                       !newProduct.name ||
                       !newProduct.category ||
@@ -191,28 +264,68 @@ export default function StoreProducts() {
                       return;
                     }
 
-                    const product = {
-                      id: Date.now(),
-                      name: newProduct.name,
-                      category: newProduct.category,
-                      price: Number(newProduct.price),
-                      stock: Number(newProduct.stock),
-                    };
+                    try {
+                      const url = editingProduct
+                        ? `http://localhost:5000/api/products/${editingProduct.id}`
+                        : "http://localhost:5000/api/products";
 
-                    setProducts((prev) => [...prev, product]);
+                      const method = editingProduct ? "PUT" : "POST";
 
-                    setNewProduct({
-                      name: "",
-                      category: "",
-                      price: "",
-                      stock: "",
-                    });
+                      const response = await fetch(url, {
+                        method,
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                          name: newProduct.name,
+                          category: newProduct.category,
+                          price: Number(newProduct.price),
+                          stock: Number(newProduct.stock),
+                        }),
+                      });
 
-                    setShowModal(false);
+                      const data = await response.json();
+
+                      if (!response.ok) {
+                        throw new Error(
+                          data.message ||
+                            (editingProduct
+                              ? "Failed to update product"
+                              : "Failed to add product"),
+                        );
+                      }
+
+                      const product = {
+                        ...data,
+                        id: data._id,
+                      };
+
+                      if (editingProduct) {
+                        setProducts((prev) =>
+                          prev.map((item) =>
+                            item.id === editingProduct.id ? product : item,
+                          ),
+                        );
+                      } else {
+                        setProducts((prev) => [...prev, product]);
+                      }
+
+                      setNewProduct({
+                        name: "",
+                        category: "",
+                        price: "",
+                        stock: "",
+                      });
+
+                      setEditingProduct(null);
+                      setShowModal(false);
+                    } catch (error) {
+                      alert(error.message);
+                    }
                   }}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold"
                 >
-                  Add Product
+                  {editingProduct ? "Update Product" : "Add Product"}
                 </button>
               </div>
             </div>

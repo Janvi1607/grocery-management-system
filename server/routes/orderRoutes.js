@@ -3,13 +3,9 @@ const express = require("express");
 const Order = require("../models/Order");
 
 const router = express.Router();
+const { protect, authorize } = require("../middleware/authMiddleware");
 
 const validateOrder = [
-  body("customer")
-    .trim()
-    .notEmpty()
-    .withMessage("Customer name is required"),
-
   body("items")
     .isArray({ min: 1 })
     .withMessage("Order must contain at least one item"),
@@ -33,34 +29,50 @@ const validateOrder = [
 ];
 
 // GET all orders
-router.get("/", async (req, res) => {
+router.get("/", protect, async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    let orders;
+
+    if (req.user.role === "Store") {
+      orders = await Order.find().sort({ createdAt: -1 });
+    } else {
+      orders = await Order.find({
+        customer: req.user.name,
+      }).sort({ createdAt: -1 });
+    }
+
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 });
 
 // CREATE order
-router.post("/", validateOrder, async (req, res) => {
-  try {
-    const order = new Order(req.body);
-    const savedOrder = await order.save();
+router.post("/", protect, authorize("Customer"), validateOrder, async (req, res) => {
+    try {
+      const order = new Order({
+        customer: req.user.name,
+        items: req.body.items,
+        amount: req.body.amount,
+      });
+      const savedOrder = await order.save();
 
-    res.status(201).json(savedOrder);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+      res.status(201).json(savedOrder);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+);
 
 // UPDATE order status
-router.patch("/:id/status", async (req, res) => {
+router.patch("/:id/status", protect, authorize("Store"), async (req, res) => {
   try {
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
       { status: req.body.status },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedOrder) {

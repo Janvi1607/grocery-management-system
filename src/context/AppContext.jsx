@@ -3,12 +3,50 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
-  /* ================= USER STATE ================= */
+  const login = async (email, password) => {
+    const response = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
 
-  const [user] = useState({
-    name: "Janvi Lund",
-    email: "janvi@example.com",
-    role: "Customer",
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Login failed");
+    }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    setToken(data.token);
+    setUser(data.user);
+
+    return data.user;
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    setToken(null);
+    setUser(null);
+  };
+
+  /* ================= USER STATE ================= */
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem("token");
   });
 
   /* ================= ORDERS STATE ================= */
@@ -41,95 +79,102 @@ export function AppProvider({ children }) {
   /* ================= CREATE ORDER ================= */
 
   const createOrder = async (cartItems, total) => {
-  try {
-    const response = await fetch("http://localhost:5000/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        customer: user.name,
-        items: cartItems,
-        amount: total,
-      }),
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: cartItems,
+          amount: total,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    const newOrder = {
-      ...data,
-      id: data._id,
-      total: data.amount,
-      date: data.createdAt,
-    };
+      const newOrder = {
+        ...data,
+        id: data._id,
+        total: data.amount,
+        date: data.createdAt,
+      };
 
-    setOrders((prev) => [newOrder, ...prev]);
+      setOrders((prev) => [newOrder, ...prev]);
 
-    return newOrder;
-  } catch (error) {
-    console.error("Failed to create order:", error);
-  }
-};
+      return newOrder;
+    } catch (error) {
+      console.error("Failed to create order:", error);
+    }
+  };
 
   /* ================= UPDATE ORDER ================= */
 
   const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    const response = await fetch(
-      `http://localhost:5000/api/orders/${orderId}/status`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId
-          ? {
-              ...data,
-              id: data._id,
-              total: data.amount,
-              date: data.createdAt,
-            }
-          : order
-      )
-    );
-  } catch (error) {
-    console.error("Failed to update order:", error);
-  }
-};
-
-/* ================= LOAD ORDER ================= */
-
-useEffect(() => {
-  const fetchOrders = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/orders");
+      const response = await fetch(
+        `http://localhost:5000/api/orders/${orderId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        },
+      );
+
       const data = await response.json();
 
-      const formattedOrders = data.map((order) => ({
-        ...order,
-        id: order._id,
-        total: order.amount,
-        date: order.createdAt,
-      }));
-
-      setOrders(formattedOrders);
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId
+            ? {
+                ...data,
+                id: data._id,
+                total: data.amount,
+                date: data.createdAt,
+              }
+            : order,
+        ),
+      );
     } catch (error) {
-      console.error("Failed to fetch orders:", error);
+      console.error("Failed to update order:", error);
     }
   };
 
-  fetchOrders();
-}, []);
+  /* ================= LOAD ORDER ================= */
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        if (!token) return;
+
+        const response = await fetch("http://localhost:5000/api/orders", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+
+        const formattedOrders = data.map((order) => ({
+          ...order,
+          id: order._id,
+          total: order.amount,
+          date: order.createdAt,
+        }));
+
+        setOrders(formattedOrders);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      }
+    };
+
+    fetchOrders();
+  }, [token]);
 
   /* ================= CLEAR ORDERS ================= */
 
@@ -141,6 +186,9 @@ useEffect(() => {
     <AppContext.Provider
       value={{
         user,
+        token,
+        login,
+        logout,
         orders,
         createOrder,
         updateOrderStatus,

@@ -3,6 +3,10 @@ const express = require("express");
 const Product = require("../models/Product");
 
 const router = express.Router();
+const {
+  protect,
+  authorize,
+} = require("../middleware/authMiddleware");
 
 const validateProduct = [
   body("name")
@@ -48,7 +52,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST a new product
-router.post("/", validateProduct, async (req, res) => {
+router.post("/", protect, authorize("Store"), validateProduct, async (req, res) => {
   try {
     const product = new Product(req.body);
     const savedProduct = await product.save();
@@ -60,7 +64,7 @@ router.post("/", validateProduct, async (req, res) => {
 });
 
 // UPDATE a product
-router.put("/:id", validateProduct, async (req, res) => {
+router.put("/:id", protect, authorize("Store"), validateProduct, async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
@@ -79,7 +83,7 @@ router.put("/:id", validateProduct, async (req, res) => {
 });
 
 // DELETE a product
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protect, authorize("Store"), async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
 
