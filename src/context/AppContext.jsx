@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 const AppContext = createContext();
 
@@ -52,6 +58,23 @@ export function AppProvider({ children }) {
   /* ================= ORDERS STATE ================= */
 
   const [orders, setOrders] = useState([]);
+
+  const addOrder = useCallback((order) => {
+    const formattedOrder = {
+      ...order,
+      id: order._id,
+      total: order.amount,
+      date: order.createdAt,
+    };
+
+    setOrders((prev) => {
+      if (prev.some((item) => item.id === formattedOrder.id)) {
+        return prev;
+      }
+
+      return [formattedOrder, ...prev];
+    });
+  }, []);
 
   /* ================= PRODUCTS STATE ================= */
   const [products, setProducts] = useState([]);
@@ -191,6 +214,7 @@ export function AppProvider({ children }) {
         logout,
         orders,
         createOrder,
+        addOrder,
         updateOrderStatus,
         clearOrders,
         products,

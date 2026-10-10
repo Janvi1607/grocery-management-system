@@ -1,5 +1,7 @@
 import { FaClipboardList } from "react-icons/fa";
 import { useApp } from "../context/AppContext";
+import { useEffect } from "react";
+import socket from "../socket";
 
 // const defaultOrders = [
 //   { id: "#ORD001", customer: "Rahul", amount: 850, status: "Completed" },
@@ -10,11 +12,36 @@ import { useApp } from "../context/AppContext";
 // ];
 
 export default function StoreOrders() {
-  const { orders, updateOrderStatus } = useApp();
+  const { orders, updateOrderStatus, addOrder } = useApp();
 
   // const [orders] = useState(() => {
   //   return JSON.parse(localStorage.getItem("orders")) || defaultOrders;
   // });
+
+  useEffect(() => {
+    const handleConnect = () => {
+      socket.emit("join-store");
+    };
+
+    const handleNewOrder = (newOrder) => {
+      addOrder(newOrder);
+
+      alert(`New order received from ${newOrder.customer}`);
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("new-order", handleNewOrder);
+
+    // If socket is already connected, join immediately
+    if (socket.connected) {
+      socket.emit("join-store");
+    }
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("new-order", handleNewOrder);
+    };
+  }, [addOrder]);
 
   return (
     <main className="p-5 sm:p-8">
@@ -36,17 +63,23 @@ export default function StoreOrders() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
             <p className="text-sm text-slate-500">Total Orders</p>
-            <p className="text-3xl font-bold text-slate-800 mt-2">{orders.length}</p>
+            <p className="text-3xl font-bold text-slate-800 mt-2">
+              {orders.length}
+            </p>
           </div>
 
           <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100">
             <p className="text-sm text-orange-600">Pending</p>
-            <p className="text-3xl font-bold text-orange-700 mt-2">{orders.filter((order) => order.status === "Pending").length}</p>
+            <p className="text-3xl font-bold text-orange-700 mt-2">
+              {orders.filter((order) => order.status === "Pending").length}
+            </p>
           </div>
 
           <div className="bg-green-50 rounded-2xl p-5 border border-green-100">
             <p className="text-sm text-green-600">Completed</p>
-            <p className="text-3xl font-bold text-green-700 mt-2">{orders.filter((order) => order.status === "Completed").length}</p>
+            <p className="text-3xl font-bold text-green-700 mt-2">
+              {orders.filter((order) => order.status === "Completed").length}
+            </p>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 const { body, validationResult } = require("express-validator");
 const express = require("express");
 const Order = require("../models/Order");
+const { getIO } = require("../socket");
 
 const router = express.Router();
 const { protect, authorize } = require("../middleware/authMiddleware");
@@ -58,6 +59,9 @@ router.post("/", protect, authorize("Customer"), validateOrder, async (req, res)
         amount: req.body.amount,
       });
       const savedOrder = await order.save();
+
+      const io = getIO();
+      io.emit("new-order", savedOrder);
 
       res.status(201).json(savedOrder);
     } catch (error) {
