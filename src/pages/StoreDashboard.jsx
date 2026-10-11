@@ -1,6 +1,8 @@
 import { useApp } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { FaClipboardList, FaChartLine, FaUsers, FaBox } from "react-icons/fa";
+import { useEffect } from "react";
+import socket from "../socket";
 
 import StatCard from "../components/StatCard";
 
@@ -32,7 +34,30 @@ import StatCard from "../components/StatCard";
 // ];
 
 export default function StoreDashboard() {
-  const { orders, products } = useApp();
+  const { orders, products, addOrder } = useApp();
+
+useEffect(() => {
+  const handleConnect = () => {
+    socket.emit("join-store");
+  };
+
+  const handleNewOrder = (newOrder) => {
+    addOrder(newOrder);
+    alert(`New order received from ${newOrder.customer}`);
+  };
+
+  socket.on("connect", handleConnect);
+  socket.on("new-order", handleNewOrder);
+
+  if (socket.connected) {
+    socket.emit("join-store");
+  }
+
+  return () => {
+    socket.off("connect", handleConnect);
+    socket.off("new-order", handleNewOrder);
+  };
+}, [addOrder]);
    const navigate = useNavigate();
 
   const totalOrders = orders.length;
