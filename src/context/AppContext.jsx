@@ -6,11 +6,13 @@ import {
   useState,
 } from "react";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
   const login = async (email, password) => {
-    const response = await fetch("http://localhost:5000/api/auth/login", {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +84,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/products");
+        const response = await fetch(`${API_URL}/api/products`);
         const data = await response.json();
 
         const formattedProducts = data.map((product) => ({
@@ -103,7 +105,7 @@ export function AppProvider({ children }) {
 
   const createOrder = async (cartItems, total) => {
     try {
-      const response = await fetch("http://localhost:5000/api/orders", {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,9 +138,7 @@ export function AppProvider({ children }) {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/orders/${orderId}/status`,
-        {
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export function AppProvider({ children }) {
       try {
         if (!token) return;
 
-        const response = await fetch("http://localhost:5000/api/orders", {
+        const response = await fetch(`${API_URL}/api/orders`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
