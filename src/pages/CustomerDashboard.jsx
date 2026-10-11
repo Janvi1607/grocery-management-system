@@ -1,4 +1,5 @@
 import { FaSearch, FaArrowRight, FaLeaf, FaShoppingCart } from "react-icons/fa";
+import { useState } from "react";
 
 /*** Products Images */
 import basmati_rice from "../assets/products/basmati_rice.jpg";
@@ -31,13 +32,13 @@ const productImages = {
   "Masoor Dal": masoor_dal,
   "Moong Dal": moong_dal,
   "Green Moong": green_moong,
-  "Chole": chole,
-  "Rajma": rajma,
+  Chole: chole,
+  Rajma: rajma,
   "Soyabean Chunks": soyabean_chunks,
-  "Salt": salt,
-  "Sugar": sugar,
-  "Maggi": maggi,
-  "Oreo": oreo,
+  Salt: salt,
+  Sugar: sugar,
+  Maggi: maggi,
+  Oreo: oreo,
   "Good Day": good_day,
 };
 import { useApp } from "../context/AppContext";
@@ -54,6 +55,21 @@ const categories = [
 
 export default function CustomerDashboard() {
   const { orders, products } = useApp();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      selectedCategory === "All" ||
+      product.category?.toLowerCase() === selectedCategory.toLowerCase();
+
+    const matchesSearch = product.name
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase().trim());
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -177,8 +193,9 @@ export default function CustomerDashboard() {
             {categories.map((category, index) => (
               <button
                 key={category.name}
+                onClick={() => setSelectedCategory(category.name)}
                 className={`flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl border font-medium transition ${
-                  index === 0
+                  selectedCategory === category.name
                     ? "bg-green-600 text-white border-green-600"
                     : "bg-white text-slate-600 border-slate-200 hover:border-green-500 hover:text-green-600"
                 }`}
@@ -209,19 +226,22 @@ export default function CustomerDashboard() {
               <input
                 type="text"
                 placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {products.map((product) => (
-              <ProductCard 
-                key={product.id} 
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
                 product={{
                   ...product,
                   image: productImages[product.name],
-                }} />
+                }}
+              />
             ))}
           </div>
         </section>
