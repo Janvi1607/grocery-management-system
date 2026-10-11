@@ -34,8 +34,8 @@ app.use(morgan("dev"));
 app.use(helmet());
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
+  "https://grocery-management-system-rouge.vercel.app",
+];
 
 app.use(
   cors({
@@ -78,6 +78,7 @@ const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
   },
 });
 
