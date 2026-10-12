@@ -7,6 +7,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 const { setIO } = require("./socket");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const productRoutes = require("./routes/productRoutes");
@@ -85,19 +86,44 @@ const io = new Server(httpServer, {
 setIO(io);
 
 
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+
+    if (!token) {
+      return next(new Error("Authentication required"));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    socket.user = decoded;
+    next();
+  } catch (error) {
+    next(new Error("Invalid or expired token"));
+  }
+});
+
 io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
+  console.log("Authenticated client connected:", socket.id);
+
+  // Customer ko uske personal room mein join karana
+  if (socket.user.role === "Customer") {
+    socket.join(`customer:${socket.user.id}`);
+    console.log(`Customer joined personal room`);
+  }
 
   // Store dashboard ko store room mein join karana
-  socket.on("join-store", () => {
+  if (socket.user.role === "Store") {
     socket.join("store");
     console.log(`Socket ${socket.id} joined store room`);
-  });
+  }
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
 });
+
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

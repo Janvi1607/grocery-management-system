@@ -51,7 +51,12 @@ router.get("/", protect, async (req, res) => {
 });
 
 // CREATE order
-router.post("/", protect, authorize("Customer"), validateOrder, async (req, res) => {
+router.post(
+  "/",
+  protect,
+  authorize("Customer"),
+  validateOrder,
+  async (req, res) => {
     try {
       const order = new Order({
         customer: req.user.name,
@@ -61,7 +66,12 @@ router.post("/", protect, authorize("Customer"), validateOrder, async (req, res)
       const savedOrder = await order.save();
 
       const io = getIO();
-      io.emit("new-order", savedOrder);
+
+      // Notify Store
+      io.to("store").emit("new-order", savedOrder);
+
+      // Notify the customer who placed this order
+      io.to(`customer:${req.user.id}`).emit("order-confirmation", savedOrder);
 
       res.status(201).json(savedOrder);
     } catch (error) {

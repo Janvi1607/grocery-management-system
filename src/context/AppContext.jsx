@@ -5,9 +5,10 @@ import {
   useEffect,
   useState,
 } from "react";
+import { io } from "socket.io-client";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+console.log("SOCKET BACKEND URL:", API_URL);
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
@@ -56,6 +57,38 @@ export function AppProvider({ children }) {
   const [token, setToken] = useState(() => {
     return localStorage.getItem("token");
   });
+
+  /* ================= SOCKET.IO CONNECTION ================= */
+
+  useEffect(() => {
+  console.log("Socket effect running", {
+    hasToken: !!token,
+    hasUser: !!user,
+  });
+
+    const socket = io(API_URL, {
+      auth: {
+        token,
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection failed:", error.message);
+    });
+
+    socket.on("order-confirmation", (order) => {
+      console.log("Order confirmation received:", order);
+      alert(`Order placed successfully! Order ID: ${order._id}`);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [token, user]);
 
   /* ================= ORDERS STATE ================= */
 
@@ -139,16 +172,15 @@ export function AppProvider({ children }) {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const response = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            status: newStatus,
-          }),
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
 
       const data = await response.json();
 
