@@ -1,63 +1,11 @@
 import { useApp } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { FaClipboardList, FaChartLine, FaUsers, FaBox } from "react-icons/fa";
-import { useEffect } from "react";
-import socket from "../socket";
-
 import StatCard from "../components/StatCard";
 
-// const orders = [
-//   {
-//     id: "#ORD001",
-//     customer: "Rahul",
-//     amount: 850,
-//     status: "Completed",
-//   },
-//   {
-//     id: "#ORD002",
-//     customer: "Priya",
-//     amount: 1250,
-//     status: "Pending",
-//   },
-//   {
-//     id: "#ORD003",
-//     customer: "Aman",
-//     amount: 620,
-//     status: "Completed",
-//   },
-//   {
-//     id: "#ORD004",
-//     customer: "Sneha",
-//     amount: 980,
-//     status: "Pending",
-//   },
-// ];
-
 export default function StoreDashboard() {
-  const { orders, products, addOrder } = useApp();
+  const { orders, products } = useApp();
 
-useEffect(() => {
-  const handleConnect = () => {
-    socket.emit("join-store");
-  };
-
-  const handleNewOrder = (newOrder) => {
-    addOrder(newOrder);
-    alert(`New order received from ${newOrder.customer}`);
-  };
-
-  socket.on("connect", handleConnect);
-  socket.on("new-order", handleNewOrder);
-
-  if (socket.connected) {
-    socket.emit("join-store");
-  }
-
-  return () => {
-    socket.off("connect", handleConnect);
-    socket.off("new-order", handleNewOrder);
-  };
-}, [addOrder]);
    const navigate = useNavigate();
 
   const totalOrders = orders.length;

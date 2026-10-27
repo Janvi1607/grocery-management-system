@@ -2,6 +2,9 @@ import { useState } from "react";
 import { FaShoppingCart, FaLeaf } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function Signup() {
   const navigate = useNavigate();
 
@@ -20,7 +23,7 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,6 +2,8 @@ import { FaBox, FaPlus, FaSearch, FaEdit, FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { useApp } from "../context/AppContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function StoreProducts() {
   const { products, setProducts, token } = useApp();
 
@@ -140,7 +142,7 @@ export default function StoreProducts() {
 
                     try {
                       const response = await fetch(
-                        `http://localhost:5000/api/products/${product.id}`,
+                        `${API_URL}/api/products/${product.id}`,
                         {
                           method: "DELETE",
                           headers: {
@@ -266,8 +268,8 @@ export default function StoreProducts() {
 
                     try {
                       const url = editingProduct
-                        ? `http://localhost:5000/api/products/${editingProduct.id}`
-                        : "http://localhost:5000/api/products";
+                        ? `${API_URL}/api/products/${editingProduct.id}`
+                        : `${API_URL}/api/products`;
 
                       const method = editingProduct ? "PUT" : "POST";
 

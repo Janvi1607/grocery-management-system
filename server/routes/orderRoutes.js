@@ -2,6 +2,9 @@ const { body, validationResult } = require("express-validator");
 const express = require("express");
 const Order = require("../models/Order");
 const { getIO } = require("../socket");
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const router = express.Router();
 const { protect, authorize } = require("../middleware/authMiddleware");
@@ -64,6 +67,51 @@ router.post(
         amount: req.body.amount,
       });
       const savedOrder = await order.save();
+      
+      // Send order confirmation email
+      if (req.user.email && process.env.RESEND_API_KEY) {
+        try {
+          const itemsText = savedOrder.items
+            .map((item) => {
+              const name = item.name || item.title || "Item";
+              const quantity = item.quantity || item.qty || 1;
+              const price = item.price ?? item.amount ?? 0;
+              const subtotal = price * quantity;
+
+              return `${name} x ${quantity} — ₹${subtotal}`;
+            })
+            .join("\n");
+
+          const { error } = await resend.emails.send({
+            from: "Grocery Store <onboarding@resend.dev>",
+            to: req.user.email,
+            subject: `Order Confirmation - ${savedOrder._id}`,
+            text: `
+Hello ${req.user.name},
+
+Your grocery order has been placed successfully!
+
+Order ID: ${savedOrder._id}
+Date: ${savedOrder.createdAt}
+Items:
+${itemsText}
+
+Total Amount: ₹${savedOrder.amount}
+Status: ${savedOrder.status}
+
+Thank you for shopping with us!
+      `,
+          });
+
+          if (error) {
+            console.error("Order confirmation email failed:", error);
+          } else {
+            console.log("Order confirmation email sent to:", req.user.email);
+          }
+        } catch (emailError) {
+          console.error("Email sending error:", emailError.message);
+        }
+      }
 
       const io = getIO();
 

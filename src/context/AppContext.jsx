@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { io } from "socket.io-client";
+import socket from "../socket";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 console.log("SOCKET BACKEND URL:", API_URL);
@@ -58,38 +58,6 @@ export function AppProvider({ children }) {
     return localStorage.getItem("token");
   });
 
-  /* ================= SOCKET.IO CONNECTION ================= */
-
-  useEffect(() => {
-  console.log("Socket effect running", {
-    hasToken: !!token,
-    hasUser: !!user,
-  });
-
-    const socket = io(API_URL, {
-      auth: {
-        token,
-      },
-    });
-
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection failed:", error.message);
-    });
-
-    socket.on("order-confirmation", (order) => {
-      console.log("Order confirmation received:", order);
-      alert(`Order placed successfully! Order ID: ${order._id}`);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [token, user]);
-
   /* ================= ORDERS STATE ================= */
 
   const [orders, setOrders] = useState([]);
@@ -110,6 +78,65 @@ export function AppProvider({ children }) {
       return [formattedOrder, ...prev];
     });
   }, []);
+
+  /* ================= SOCKET.IO CONNECTION ================= */
+
+  useEffect(() => {
+    if (!token || !user) {
+      socket.disconnect();
+      return;
+    }
+
+    // Authenticate the shared socket before connecting.
+    socket.auth = { token };
+
+    const handleConnect = () => {
+      console.log("Socket connected:", socket.id, "Role:", user.role);
+    };
+
+    const handleConnectError = (error) => {
+      console.error("Socket connection failed:", error.message);
+    };
+
+    const handleOrderConfirmation = (order) => {
+      if (user.role === "Customer") {
+        alert(
+          `Order placed successfully!\n` +
+            `Order ID: ${order._id}\n` +
+            `Amount: ₹${order.amount}`,
+        );
+      }
+    };
+
+    const handleNewOrder = (order) => {
+      if (user.role === "Store") {
+        console.log("New order received by Store:", order);
+        addOrder(order);
+
+        alert(
+          `New order received!\n` +
+            `Order ID: ${order._id}\n` +
+            `Customer: ${order.customer}\n` +
+            `Amount: ₹${order.amount}`,
+        );
+      }
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("order-confirmation", handleOrderConfirmation);
+    socket.on("new-order", handleNewOrder);
+
+    socket.connect();
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("order-confirmation", handleOrderConfirmation);
+      socket.off("new-order", handleNewOrder);
+      socket.disconnect();
+    };
+  }, [token, user, addOrder]);
 
   /* ================= PRODUCTS STATE ================= */
   const [products, setProducts] = useState([]);
@@ -214,6 +241,19 @@ export function AppProvider({ children }) {
           },
         });
         const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            logout();
+            setOrders([]);
+          }
+
+          throw new Error(data.message || "Failed to fetch orders");
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error("Orders response is not a valid list");
+        }
 
         const formattedOrders = data.map((order) => ({
           ...order,
